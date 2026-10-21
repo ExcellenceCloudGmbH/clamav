@@ -31,7 +31,12 @@ RUN apk add --no-cache python3 py3-pip dcron
 ENV VIRTUAL_ENV=/app/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN python3 -m venv $VIRTUAL_ENV
-RUN pip3 install --no-cache-dir sendgrid==6.12.5
+# pip is only needed to install sendgrid; its vendored certifi/urllib3/
+# msgpack would otherwise stay in the image as unfixed scanner findings.
+RUN pip3 install --no-cache-dir sendgrid==6.12.5 \
+ && python3 -m pip uninstall -y pip \
+ && apk del --no-cache py3-pip \
+ && rm -rf /usr/lib/python3*/ensurepip
 
 COPY . /
 RUN chmod +x /scan.sh /start.sh
